@@ -1,3 +1,2 @@
-outputs
-*.jpg
-*.jpg
+outputs/*.jpg
+
