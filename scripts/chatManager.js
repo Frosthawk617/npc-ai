@@ -114,6 +114,8 @@ var commands = Hooks.on("chatMessage", async (bla,content,blah)=>{
 })
 
 var chat = Hooks.on("createChatMessage",async(content,misc,user)=>{
+  var speakerActor = await game.actors.get(content.speaker.actor);
+  console.log(speakerActor);
   if(content.type != 5){
     var speaker = content.speaker.alias
 if (content.speaker.actor != actor._id & listen & content.content != "!c" ) {
@@ -123,18 +125,42 @@ if (content.speaker.actor != actor._id & listen & content.content != "!c" ) {
   }
     var nHistory =[];
     var memory = actor.getFlag('npc-ai', 'memory');
+    console.log(memory);
+    if (typeof await speakerActor.getFlag("npc-ai", "persona") != 'undefined') {
+    var speakerPers = await speakerActor.getFlag("npc-ai", "persona");
+    var speakerData = speakerPers.description;
+    } else {
+    var speakerData = speakerActor.system.description;
+    }
+    var speakerDescription = {
+      "role": "user",
+      "content": speakerData
+    }
     var message =            {
         "role": "user",
          "content": ""+speaker+": "+content.content+""
          }
          if (memory[0].content != sysPrompt.content) {
-          console.log(memory);
           nHistory.push(sysPrompt);
          }
+        var testMem = memory;
+        var detectData = null;
+        for (let t = 0; t < testMem.length; t++) {
+          const element = testMem[t];
+          if (element.content === speakerData.description) {
+            detectData = element.content;
+            break;
+          }
+        }
+      // var detectData = await testMem.find(element => element.content = speakerData.description);
+      console.log(detectData);
+         if(!detectData){
+          nHistory.push(speakerDescription);
+         }
     var speakerActor = await game.actors.get(content.speaker.actor);
-    var speakerData = await speakerActor.getFlag("npc-ai", "persona");
    var history = nHistory.concat(memory);
     history.push(message);
+    console.log(history);
     var past= actor.getFlag("npc-ai","longterm");
     var data = {
         "messages": 

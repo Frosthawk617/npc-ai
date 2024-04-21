@@ -6,18 +6,6 @@ class Combat{
 }
 async function genCombatAction(actor,combatants){
 
-    switch (game.system.id) {
-        case "swse":
-            var healthObj = actor.system.health;
-            console.log("swse");
-            break;
-        case "dnd5e":
-            var healthObj = actor.system.attributes.hp;
-            break;
-        default:
-            break;
-    }
-
 if (typeof(await actor.getFlag("npc-ai", "attackHistory")) === "undefined") {
     await actor.setFlag("npc-ai", "attackHistory", []);
     var history = await actor.getFlag("npc-ai", "attackHistory");
@@ -49,17 +37,43 @@ var weps = [];
 var message = [];
 var equipment = [];
 
-actor.items.forEach(element => {
-    if(element.type === "weapon" || element.type === "forcePower" || element.type === "spell") {
-        weps.push(element.name);
-    }
-});
+switch (game.system.id) {
+    case "swse":
+        var healthObj = actor.system.health;
+        console.log("swse");
+        actor.items.forEach(element => {
+            if(element.type === "weapon" || element.type === "forcePower") {
+                weps.push(element.name);
+            }
+        });
+        actor.items.forEach(element => {
+            if(element.type === "equipment") {
+                equipment.push(element.name);
+            }
+        });
+        break;
+    case "dnd5e":
+        var healthObj = actor.system.attributes.hp;
 
-actor.items.forEach(element => {
-    if(element.type === "equipment") {
-        equipment.push(element.name);
-    }
-});
+        actor.items.forEach(element => {
+            if(element.type === "weapon" || element.type === "spell" || element.type === "feat") {
+                weps.push(element.name);
+            }
+        });
+        
+        actor.items.forEach(element => {
+            if(element.type === "equipment") {
+                equipment.push(element.name);
+            }
+        });
+
+        break;
+    default:
+        break;
+}
+
+
+
 
 var persona = await actor.getFlag("npc-ai", "persona");
 if (typeof persona != "undefined") {
@@ -159,7 +173,6 @@ async function findAllies(friendlyDis,combatants,actor){
         switch (game.system.id) {
             case "swse":
                 var healthObj = targetActor.system.health;
-                console.log("swse");
                 break;
             case "dnd5e":
                 var healthObj = targetActor.system.attributes.hp;
@@ -169,6 +182,7 @@ async function findAllies(friendlyDis,combatants,actor){
         }
         for (let i = 0; i < friendlyDis.length; i++) {
             const dis = friendlyDis[i];
+            console.log(targetActor);
             if (targetActor.prototypeToken.disposition === dis & targetActor._id != actor._id) {
                 var allyDesc = ""+targetActor.name+"[Health: "+healthObj.value+"/"+healthObj.max+"]"
                 allies.push(allyDesc);
