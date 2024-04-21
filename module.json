@@ -1,0 +1,22 @@
+{
+  "id": "npc-ai",
+  "title": "NPC AI",
+  "version": "v0.3.1",
+  "authors": [
+    {
+      "name": "Frosthawk",
+      "url": "",
+      "flags": {}
+    }
+  ],
+  "esmodules": [
+    "module.js"
+  ],
+  "url": "",
+  "manifest": "",
+  "download": "",
+  "compatibility": {
+    "minimum": "10",
+    "verified": "11"
+  }
+}
