@@ -211,6 +211,12 @@ async function charRegen(actor,prompt, memories){
                                 await actor.setFlag('npc-ai', 'charGenHistory', history);
                                 await actor.setFlag('npc-ai', 'longterm', []);
                             }
+                          },
+                          buttonB: {
+                            label: "Regenerate",
+                            callback: async (html) => { 
+                                await charRegen(actor,prompt, memories);
+                            }
                           }
                         },
                         width: 80,

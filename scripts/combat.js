@@ -9,8 +9,10 @@ async function genCombatAction(actor,combatants){
     switch (game.system.id) {
         case "swse":
             var healthObj = actor.system.health;
-            var healthValue = healthObj.value;
-            var healthMax = healthObj.max;
+            console.log("swse");
+            break;
+        case "dnd5e":
+            var healthObj = actor.system.attributes.hp;
             break;
         default:
             break;
@@ -93,12 +95,12 @@ if (!typeof(await actor.getFlag("npc-ai", "attackHistory")) === "undefined") {
 
 var healthMessage = 
     {"role": "user", 
-    "content": ""+actor.name+"'s current health: "+healthValue+"/"+healthMax+""
+    "content": ""+actor.name+"'s current health: "+healthObj.value+"/"+healthObj.max+""
     }
 messages.push(healthMessage);
 messages.push(
     {"role": "user",
-    "content": " What do you do? Answer with a short sentence. Describe the appearance of the action. You must mention the enemy you are targeting by name. Always assume the enemy is aware of you. Don't describe the actions of the enemy targeted. You may also choose to use equipment to assist your allies if they are low on health but you must have equipment or abilities available to do so. Take only one action."
+    "content": " What do you do? Answer with a short sentence. Describe the appearance of the action. You must mention the enemy you are targeting by name. Always assume the enemy is aware of you. Don't describe the actions of the enemy targeted. You may also choose to use equipment to assist your allies if they are low on health but you must have equipment or abilities available to do so. Take only one action. Do not mention the health of a character besides what they may physically look like."
     })
 
 var data = {
@@ -131,8 +133,19 @@ async function findTargets(friendlyDis,combatants){
 var valTargets = [];
 combatants.forEach( async (element) => {
     var targetActor = await game.actors.get(element.actorId);
+    switch (game.system.id) {
+        case "swse":
+            var healthObj = targetActor.system.health;
+            console.log("swse");
+            break;
+        case "dnd5e":
+            var healthObj = targetActor.system.attributes.hp;
+            break;
+        default:
+            break;
+    }
         if (targetActor.prototypeToken.disposition != friendlyDis[0] & targetActor.prototypeToken.disposition != friendlyDis[1] & element.defeated != true) {
-            var targDesc = ""+targetActor.name+"[Health: "+targetActor.system.health.value+"/"+targetActor.system.health.max+"]"
+            var targDesc = ""+targetActor.name+"[Health: "+healthObj.value+"/"+healthObj.max+"]"
             valTargets.push(targDesc);
         }
 });
@@ -143,10 +156,21 @@ async function findAllies(friendlyDis,combatants,actor){
     var allies = [];
     combatants.forEach( async (element) => {
         var targetActor = await game.actors.get(element.actorId);
+        switch (game.system.id) {
+            case "swse":
+                var healthObj = targetActor.system.health;
+                console.log("swse");
+                break;
+            case "dnd5e":
+                var healthObj = targetActor.system.attributes.hp;
+                break;
+            default:
+                break;
+        }
         for (let i = 0; i < friendlyDis.length; i++) {
             const dis = friendlyDis[i];
             if (targetActor.prototypeToken.disposition === dis & targetActor._id != actor._id) {
-                var allyDesc = ""+targetActor.name+"[Health: "+targetActor.system.health.value+"/"+targetActor.system.health.max+"]"
+                var allyDesc = ""+targetActor.name+"[Health: "+healthObj.value+"/"+healthObj.max+"]"
                 allies.push(allyDesc);
             }
         }

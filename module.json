@@ -10,7 +10,7 @@
     }
   ],
   "esmodules": [
-    "module.js"
+    "scripts/module.js"
   ],
   "url": "",
   "manifest": "",
