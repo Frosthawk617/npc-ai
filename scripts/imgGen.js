@@ -1,3 +1,4 @@
+import { loadModel,unloadModel } from "./oobaController.js";
 class ImgGen{
     constructor(actor) {
       this.actor = actor;
@@ -23,7 +24,8 @@ base,
     "mode": "chat-instruct",
     "temperature": 0.7,
     "top_p": 0.9,
-    "context": JSON.stringify(persona)
+    "context": JSON.stringify(persona),
+    "max_tokens": 70
 };
 
 await $.ajax({
@@ -32,21 +34,37 @@ await $.ajax({
     headers: {"Content-Type": "application/json"},
     data: JSON.stringify(data),
     success: async function (response) {
-  ChatMessage.create({"content": ``+response.choices[0].message.content+``, "speaker": speaker})
   var prefix = "score_9_up, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up, BREAK source_anime,"
    var suffix  = "good eyes, detailed face"
    var negative_prompt = "child, bad eyes, bad face,"
    var sampler = "DDIM"
-  var prompt = JSON.stringify({
-    "prompt": prefix+response.choices[0].message.content+suffix,
-    "negative_prompt": negative_prompt,
-    "sampler_name": sampler,
-    "batch_size": 1,
-    "width": 576,
-    "height": 1024
-});
-await reloadCheckpoint();
-await reqImage(prompt,actor);
+   new Dialog({
+    title: "Combat Memory Editor:"+actor.name+"",
+    content: `<p><textarea name="prompt">`+JSON.stringify(prefix+response.choices[0].message.content+suffix)+`</textarea></p>`,
+    buttons: {
+      buttonA: {
+        label: "Generate",
+        callback: async (html) => { 
+            var newPrompt = JSON.parse(html.find('[name="prompt"]').val());
+            var prompt = JSON.stringify({
+                "prompt": newPrompt,
+                "negative_prompt": negative_prompt,
+                "sampler_name": sampler,
+                "batch_size": 1,
+                "width": 576,
+                "height": 1024
+            });
+            await reloadCheckpoint();
+            await unloadModel();
+            await unloadModel();
+            await unloadModel();
+            await reqImage(prompt,actor);
+        }
+      }
+    },
+    width: 80,
+    height: 360
+  }).render(true)
 }
 });
 
@@ -54,10 +72,12 @@ await reqImage(prompt,actor);
 
 
 async function reqImage(prompt,actor){
-unloadOoba();
 var sd = "http://127.0.0.1:7861/sdapi/v1/txt2img"
 var checkPointApi = "http://127.0.0.1:7861/sdapi/reload-checkpoint"
 var ooba = "http://127.0.0.1:5000/v1/chat/completions"
+await unloadModel();
+await unloadModel();
+await unloadModel();
     await $.ajax({
         url: sd,
         type: "POST",

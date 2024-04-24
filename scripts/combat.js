@@ -76,12 +76,17 @@ switch (game.system.id) {
 
 
 var persona = await actor.getFlag("npc-ai", "persona");
+var longMem = await actor.getFlag("npc-ai", "longterm");
 if (typeof persona != "undefined") {
     var defPersona = JSON.stringify(persona);
 } else {
     var defPersona = ""
 }
-
+if (typeof longMem != "undefined") {
+    var defLong = JSON.stringify(persona);
+} else {
+    var defLong = ""
+}
 
 weps  =  JSON.stringify(weps);
 targets = JSON.stringify(targets);
@@ -122,7 +127,7 @@ var data = {
     "mode": "chat-instruct",
     "temperature": 0.7,
     "top_p": 0.9,
-    "context": defPersona,
+    "context": ""+defPersona+"Past Event:"+defLong,
     "name2": actor.name
 };
 sendPayload(data);
@@ -138,6 +143,7 @@ $.ajax({
         history.push(newHist);
         await actor.setFlag("npc-ai", "attackHistory", history);
         ChatMessage.create({"content": response.choices[0].message.content, "speaker": ChatMessage.getSpeaker({actor})})
+        await automateAction(actor,newHist.content);
     }
 });
 }
@@ -164,6 +170,28 @@ combatants.forEach( async (element) => {
         }
 });
 return valTargets;
+}
+
+async function automateAction(actor,content){
+actor.items.forEach(element => {
+    console.log(element._source.name);
+    var upper = element._source.name;
+    var lower = element._source.name.toLowerCase();
+    if (content.includes(upper) || content.includes(lower)) {
+        var item = actor.items.getName(element._source.name);
+        switch (game.system.id) {
+            case "dnd5e":
+                item.use();
+                break;
+            case "swse":
+                item.createAttackDialog();
+                    break;
+            default:
+                break;
+        }
+
+    }
+});
 }
 
 async function findAllies(friendlyDis,combatants,actor){

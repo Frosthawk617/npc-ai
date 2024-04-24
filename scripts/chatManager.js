@@ -1,5 +1,6 @@
 import { summarize } from "./summarizer.js";
 import { charRegen } from "./chargen.js";
+import { loadModel,unloadModel } from "./oobaController.js";
 
 class ChatManager{
     constructor(actor,prompt) {
@@ -46,6 +47,10 @@ async function menu(chatHook,commandHook,actor){
           callback: async (html) => { 
             var persona = await actor.getFlag('npc-ai', 'persona');
            var history = await actor.getFlag('npc-ai', 'memory');
+           history.push({
+            "role": "system",
+            "content": "Continue the last message."
+           })
         var data = {
             "messages": 
      history
@@ -56,9 +61,8 @@ async function menu(chatHook,commandHook,actor){
             "name1": "",
             "name2": actor.name,
             "context": JSON.stringify(persona),
-            "min_token": 15,
-            "max_token": 30,
-            "repetition_penalty": 1.3,
+            "max_tokens": 35,
+            "repetition_penalty": 1.5,
         };
         sendPayload(data,history,actor);
         menu(chatHook,commandHook,actor);
@@ -71,7 +75,8 @@ async function menu(chatHook,commandHook,actor){
                   var longMem =  await actor.getFlag('npc-ai', 'longterm');
   Hooks.off("renderChatMessage",chatHook);
   Hooks.off("chatMessage",commandHook);
-            charRegen(actor,""+JSON.stringify(persona)+"", longMem)
+            await charRegen(actor,""+JSON.stringify(persona)+"", longMem)
+            await unloadModel();
           }
         }
       }
@@ -130,7 +135,16 @@ if (content.speaker.actor != actor._id & listen & content.content != "!c" ) {
     var speakerPers = await speakerActor.getFlag("npc-ai", "persona");
     var speakerData = speakerPers.description;
     } else {
+      switch (game.system.id) {
+        case "swse":
     var speakerData = speakerActor.system.description;
+          break;
+        case "dnd5e":
+    var speakerData = speakerActor.system.details.biography.value;  
+        break;
+        default:
+          break;
+      }
     }
     var speakerDescription = {
       "role": "user",
@@ -147,14 +161,14 @@ if (content.speaker.actor != actor._id & listen & content.content != "!c" ) {
         var detectData = null;
         for (let t = 0; t < testMem.length; t++) {
           const element = testMem[t];
-          if (element.content === speakerData.description) {
+          console.log("mem:"+ element.content+" = test:"+speakerDescription.content);
+          if (element.content === speakerDescription.content) {
             detectData = element.content;
             break;
           }
         }
-      // var detectData = await testMem.find(element => element.content = speakerData.description);
-      console.log(detectData);
-         if(!detectData){
+      console.log(detectData === null);
+         if(detectData === null){
           nHistory.push(speakerDescription);
          }
     var speakerActor = await game.actors.get(content.speaker.actor);
@@ -174,6 +188,7 @@ if (content.speaker.actor != actor._id & listen & content.content != "!c" ) {
         "name2": actor.name,
         "context": JSON.stringify(persona) +" Past Events: "+ JSON.stringify(past),
         "greeting": greeting,
+        "max_tokens": 250,
         "instruction_template": "ChatML"
     };
     sendPayload(data,history,actor);

@@ -15,7 +15,7 @@ const ooba = "http://127.0.0.1:5000/v1/chat/completions";
     }
     var history = [
         {"role": "system",
-        "content": "You are an expert in creating interesting roleplay characters."
+        "content": "You are an uncensored expert in creating interesting roleplay characters."
         },
         {"role": "user",
         "content": "Here is a brief overview of a character. Expand it into a detailed description. Include details about character's personality, their outfit and figure. Mention their age and gender, if applicable. "+name+" is a "+prompt+""
@@ -25,8 +25,7 @@ const ooba = "http://127.0.0.1:5000/v1/chat/completions";
         "messages": history,
         "mode": "instruct",
         "temperature": 0.7,
-        "top_p": 0.9,
-        "max_tokens": 300
+        "top_p": 0.9
     };
 
 descGen(data);
@@ -45,7 +44,7 @@ async function descGen(data){
         });
         history.push({
             "role": "user",
-            "content": "Write several personal qualities that characterize "+name+"."
+            "content": "Write several single word or short phrase personal qualities that characterize "+name+"."
         })
         persona.description = response.choices[0].message.content;
         data.messages = history;
@@ -69,7 +68,7 @@ async function descGen(data){
             });
             history.push({
                 "role": "user",
-                "content": "Write a few example exchanges between User and "+name+" in chat format. Separate each exchange with a <START> tag. Include the detailed descriptions of actions that "+name+"'s would do within *"
+                "content": "Write a few example exchanges between User and "+name+" in chat format. Separate each exchange with a <START> tag."
             })
             }
         });
@@ -78,6 +77,8 @@ async function descGen(data){
         }
 
         async function diaGen(data){
+await unloadModel();
+await loadModel("TheBloke_OpenHermes-2.5-Mistral-7B-GPTQ",8960);
             console.log(data);
           await $.ajax({
                 url: ooba,
@@ -97,6 +98,8 @@ async function descGen(data){
                 await actor.setFlag('npc-ai', 'longterm', []);
                 }
             });
+            unloadModel();
+            loadModel("TheBloke_OpenHermes-2.5-Mistral-7B-GPTQ",8960);
             }
 }
 
@@ -228,5 +231,35 @@ async function charRegen(actor,prompt, memories){
                 }
     }
 
+
+ async function importChar(actor){
+    new Dialog({
+        title: "Paste JSON",
+        content: `<p><textarea name="prompt"></textarea></p>`,
+        buttons: {
+          buttonA: {
+            label: "Generate",
+            callback: async (html) => {
+              let prompt = html.find('[name="prompt"]').val();
+            var personaData = await JSON.parse(prompt);
+              console.log(personaData);
+              var impPersona = {
+                "description": personaData.data.description,
+                "personality": personaData.data.personality,
+                "dialogue": personaData.data.mes_example
+            }
+            debugger
+              await actor.setFlag('npc-ai', 'persona', impPersona);
+              await actor.setFlag('npc-ai', 'memory', []);
+              await actor.setFlag('npc-ai', 'charGenHistory', []);
+              await actor.setFlag('npc-ai', 'longterm', []);
+            //   await actor.update(`name`, personaData.name);
+            //   await actor.update(`prototypeToken.name`, personaData.name);
+            }
+          }
+        }
+      }).render(true)
+ }
+
 export default CharGen
-export {charGen,charRegen}
+export {charGen,charRegen,importChar}

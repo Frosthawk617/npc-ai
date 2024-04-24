@@ -36,7 +36,17 @@ shortMemory.push(message);
 
 }
 
-async function summarizeCombat(actor, allies, enemies, healthObj){
+async function summarizeCombat(actor, allies, enemies){
+    switch (game.system.id) {
+        case "swse":
+            var healthObj = actor.system.health;
+            break;
+        case "dnd5e":
+            var healthObj = actor.system.attributes.hp;
+            break;
+        default:
+            break;
+    }
     console.log(allies,enemies);
     var shortMemory = await actor.getFlag("npc-ai","attackHistory");
     var message = {"role": "user", "content": "Summarize this entire combat sequence from an objective view. Ensure all important details are retained. Focusing on "+actor.name+" and her allies("+allies+") fighting against ("+enemies+"). Include interactions and general actions."+actor.name+" ended combat with this much health: "+healthObj.value+"/"+healthObj.max+" Always suffix the summary with a general condition of "+actor.name+". If combat ends with "+actor.name+"'s health at or below 0 she is unconscious. The fight is over."}

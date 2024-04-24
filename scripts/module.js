@@ -1,4 +1,4 @@
-import { charGen } from "./chargen.js";
+import { charGen,importChar } from "./chargen.js";
 import { startChat } from "./chatManager.js";
 import { genGreet } from "./genGreet.js";
 import { genCombatAction,findTargets,findAllies} from "./combat.js";
@@ -63,39 +63,48 @@ Hooks.on("combatStart", async(combatData)=>{
     })
 
 })
-
-
   Hooks.on("getActorSheetHeaderButtons",async(sheet, buttons)=>{
     console.log(sheet,buttons);
       const target = (sheet.actor);
         console.log(target);
         buttons.unshift({
             class: 'persona',
-            label: 'Generate Persona',
             icon: 'fa-solid fa-brain',
             onclick: () => {
-            new Dialog({
-              title: "Enter Starting Prompt",
-              content: `<p>`+target.name+` is a <input type="text" name="prompt" id="promptInput">`,
-              buttons: {
-                buttonA: {
-                  label: "Generate",
-                  callback: async (html) => {
-                    let prompt = html.find('[name="prompt"]').val();
-                    console.log(target.name,prompt);
-                    charGen(target,prompt);
-                  }
-                }
-              }
-            }).render(true)
-            }
-        });
-        buttons.unshift({
-          class: 'speak',
-          label: 'Start Conversation',
-          icon: 'fa-solid fa-comment',
-          onclick: async() => {
-console.log("started convo");
+              new Dialog({
+                title: "Choose Function",
+                content: `<p></p>`,
+                buttons: {
+                  buttonA: {
+                    label: "Persona",
+                    callback: async (html) => {
+                      new Dialog({
+                        title: "Enter Starting Prompt",
+                        content: `<p>`+target.name+` is a <input type="text" name="prompt" id="promptInput">`,
+                        buttons: {
+                          buttonA: {
+                            label: "Generate",
+                            callback: async (html) => {
+                              let prompt = html.find('[name="prompt"]').val();
+                              console.log(target.name,prompt);
+                              charGen(target,prompt);
+                            }
+                          },
+                          buttonB: {
+                            label: "Import",
+                            callback: async (html) => {
+                              await importChar(target);
+                            }
+                          }
+                        }
+                      }).render(true)
+                    }
+                  },
+                  buttonB: {
+                    label: "Start Conversation",
+                    callback: async (html) => {
+  
+  console.log("started convo");
 if (target.getFlag("npc-ai","memory").length < 1) {
   genGreet(target);
 }else{
@@ -108,14 +117,16 @@ await ChatMessage.create({"content": "Conversation with: "+target.name+" ended d
 });
 console.log(hooks);
 
-          }}
-      });
-      buttons.unshift({
-        class: 'image',
-        label: 'Generate Portrait',
-        icon: 'fa-solid fa-person',
-        onclick: async () => {
-          await portraitGen(target);
-        }
-    });
+          }
+                    }
+                  },
+                  buttonC: {
+                    label: "Image Gen",
+                    callback: async (html) => {
+                      await portraitGen(target);}
+                  }
+                }
+              }).render(true)
+            }
+        });
     });
